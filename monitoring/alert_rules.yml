@@ -1,0 +1,62 @@
+groups:
+  - name: mlops_alerts
+    interval: 30s
+    rules:
+      - alert: PipelineHighErrorRate
+        expr: |
+          (increase(pipeline_errors_total[5m]) / increase(pipeline_runs_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate in MLOps pipeline"
+          description: "Error rate is {{ $value | humanizePercentage }} over last 5 minutes"
+
+      - alert: ModelPerformanceDegraded
+        expr: |
+          model_rmse > 2.0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Model RMSE is higher than threshold"
+          description: "Current RMSE: {{ $value }}"
+
+      - alert: S3UploadFailure
+        expr: |
+          increase(s3_upload_failures_total[10m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "S3 upload failures detected"
+          description: "{{ $value }} upload failures in last 10 minutes"
+
+      - alert: APICallHighLatency
+        expr: |
+          api_request_duration_seconds{quantile="0.99"} > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API call latency is high"
+          description: "P99 latency: {{ $value }}s"
+
+      - alert: ContainerMemoryUsageHigh
+        expr: |
+          (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage in container"
+          description: "Memory usage: {{ $value | humanizePercentage }}"
+
+      - alert: PipelineExecutionTimeout
+        expr: |
+          pipeline_execution_duration_seconds > 3600
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pipeline execution took too long"
+          description: "Execution time: {{ $value }}s"

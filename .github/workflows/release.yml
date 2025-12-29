@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Get tag version
+      id: tag_version
+      run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Create Release Notes
+      id: release_notes
+      run: |
+        # 이전 태그 찾기
+        PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -z "$PREV_TAG" ]; then
+          CHANGELOG=$(git log --oneline)
+        else
+          CHANGELOG=$(git log --oneline $PREV_TAG..HEAD)
+        fi
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag_version.outputs.version }}
+        release_name: Release ${{ steps.tag_version.outputs.version }}
+        body: |
+          ## Changes in this Release
+          ${{ steps.release_notes.outputs.changelog }}
+          
+          ## Installation
+          ```bash
+          pip install -e git+https://github.com/${{ github.repository }}.git@${{ steps.tag_version.outputs.version }}#egg=mlops
+          ```
+          
+          Docker Image:
+          ```
+          docker pull ghcr.io/${{ github.repository }}:${{ steps.tag_version.outputs.version }}
+          ```
+        draft: false
+        prerelease: false
+
+  publish-pypi:
+    needs: create-release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+
+    - name: Build distribution
+      run: python -m build
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
