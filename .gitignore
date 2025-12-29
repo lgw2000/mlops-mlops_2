@@ -194,5 +194,6 @@ __pycache__/
 .venv/
 *.pyc
 EOF
+wandb/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,linux
