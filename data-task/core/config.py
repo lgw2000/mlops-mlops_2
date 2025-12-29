@@ -14,3 +14,6 @@ bucket_name=os.getenv('S3_BUCKET')
 # TMDB Settings
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
+
+# WANDB Setting
+WANDB_API_KEY = os.getenv('WANDB_API_KEY')
