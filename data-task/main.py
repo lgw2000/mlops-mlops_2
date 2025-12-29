@@ -1,12 +1,13 @@
 import os
+import traceback
 from datetime import datetime
-from dotenv import load_dotenv
+
 from core.config import TMDB_API_KEY
 from core.s3_client import S3Manager
+from dotenv import load_dotenv
 from src.collector import TMDBCollector
 from src.preprocessor import Preprocessor
 from src.train import ModelTrainer
-import traceback
 
 
 def main():

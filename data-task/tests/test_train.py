@@ -1,8 +1,9 @@
 """Unit tests for ModelTrainer module."""
-import pytest
-import pandas as pd
-import numpy as np
 import os
+
+import numpy as np
+import pandas as pd
+import pytest
 from src.train import ModelTrainer
 
 
@@ -40,8 +41,8 @@ class TestModelTrainer:
 
     def test_train_model(self, model_trainer, sample_training_data):
         """Test model training."""
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             sample_training_data.to_csv(f.name, index=False)
@@ -58,8 +59,8 @@ class TestModelTrainer:
 
     def test_model_prediction(self, model_trainer, sample_training_data):
         """Test model prediction."""
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             sample_training_data.to_csv(f.name, index=False)
@@ -80,8 +81,8 @@ class TestModelTrainer:
 
     def test_save_model(self, model_trainer, sample_training_data):
         """Test saving model."""
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             sample_training_data.to_csv(f.name, index=False)
@@ -111,8 +112,8 @@ class TestModelTrainer:
             "popularity": [100.0, 150.0],
         })
 
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             small_data.to_csv(f.name, index=False)
@@ -132,8 +133,8 @@ class TestModelTrainer:
 
     def test_metrics_format(self, model_trainer, sample_training_data):
         """Test that metrics are in correct format."""
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             sample_training_data.to_csv(f.name, index=False)

@@ -1,7 +1,7 @@
 """Unit tests for Preprocessor module."""
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 from src.preprocessor import Preprocessor
 
 
@@ -35,8 +35,8 @@ class TestPreprocessor:
     def test_transform_data_types(self, preprocessor, sample_dataframe):
         """Test that transform returns correct data types."""
         # Create a temporary CSV file
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             sample_dataframe.to_csv(f.name, index=False)
@@ -57,8 +57,8 @@ class TestPreprocessor:
             "vote_average": [7.5, 8.0, None],
         })
 
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             df_with_missing.to_csv(f.name, index=False)
@@ -73,8 +73,8 @@ class TestPreprocessor:
 
     def test_feature_scaling(self, preprocessor, sample_dataframe):
         """Test that features are properly scaled."""
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             sample_dataframe.to_csv(f.name, index=False)
@@ -91,8 +91,8 @@ class TestPreprocessor:
 
     def test_save_processed_data(self, preprocessor, sample_dataframe):
         """Test saving processed data."""
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             sample_dataframe.to_csv(f.name, index=False)
@@ -116,8 +116,8 @@ class TestPreprocessor:
         """Test handling of empty DataFrame."""
         df_empty = pd.DataFrame()
 
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             df_empty.to_csv(f.name, index=False)

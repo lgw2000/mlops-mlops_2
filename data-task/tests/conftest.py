@@ -1,6 +1,7 @@
 """Conftest for pytest configuration and fixtures."""
-import pytest
 import os
+
+import pytest
 
 
 @pytest.fixture(scope="session")

@@ -1,5 +1,7 @@
-import boto3
 from pathlib import Path
+
+import boto3
+
 try:
     from . import config as cfg
 except ImportError:

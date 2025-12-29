@@ -1,9 +1,11 @@
-import pandas as pd
-import joblib
 import json
 from pathlib import Path
+
+import joblib
+import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
+
 
 class ModelTrainer:
     def __init__(self, target_column='vote_average'):
