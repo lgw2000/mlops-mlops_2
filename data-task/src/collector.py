@@ -33,6 +33,6 @@ class TMDBCollector:
         save_path = Path(f"data/raw/{date_str}")
         save_path.mkdir(parents=True, exist_ok=True)
           
-        file_full_path = save_path / "raw_data.csv"
+        file_full_path = save_path / f"{date_str}.csv"
         df.to_csv(file_full_path, index=False, encoding='utf-8-sig')
         return str(file_full_path)
