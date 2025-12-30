@@ -1,0 +1,41 @@
+name: CI Pipeline (Team Standard)
+
+# 언제 실행할까? : main이나 dev 브랜치에 코드가 올라오면(push) 실행!
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest  # 깃허브가 제공하는 우분투 컴퓨터에서 실행
+
+    steps:
+    # 1. 코드를 가져옵니다
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 2. 파이썬 3.11 환경을 세팅합니다 
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    # 3. 필요한 라이브러리를 설치합니다
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    # 4. 코드 문법 검사 (flake8) - 오타나 심각한 오류가 없는지 봅니다
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # 문법 오류(E9), 정의되지 않은 이름(F63) 등 치명적인 오류만 검사
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+    # 5. 도커 이미지가 잘 만들어지는지 테스트해봅니다 (배포 전 리허설)
+    - name: Test Docker Build
+      run: |
+        docker build . --file Dockerfile --tag team-project:test
