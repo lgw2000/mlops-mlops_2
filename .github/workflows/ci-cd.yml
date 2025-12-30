@@ -37,20 +37,20 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 data-task/src data-task/core --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 data-task/src data-task/core --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 src core --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 src core --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Format with black
-        run: black data-task/
+        run: black
 
       - name: Sort imports with isort
-        run: isort data-task/
+        run: isort
 
       - name: Check formatting
-        run: black --check data-task/
+        run: black --check
 
       - name: Check import order with isort
-        run: isort --check-only data-task/
+        run: isort --check-only
 
       - name: Run unit tests
         run: |
@@ -61,7 +61,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ./data-task/coverage.xml
+          file: ./coverage.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -83,13 +83,13 @@ jobs:
 
       - name: Run bandit security scan
         run: |
-          bandit -r data-task/src data-task/core -f json -o bandit-report.json
-          bandit -r data-task/src data-task/core
+          bandit -r src core -f json -o bandit-report.json
+          bandit -r src core
         continue-on-error: true
 
       - name: Check dependencies for vulnerabilities
         run: |
-          pip install -r data-task/requirements.txt
+          pip install -r requirements.txt
           safety check --json
         continue-on-error: true
 
@@ -244,7 +244,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r data-task/requirements.txt
+          pip install -r requirements.txt
 
       - name: Run MLOps Pipeline
         run: |
@@ -262,7 +262,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: pipeline-outputs
-          path: data-task/data/output/
+          path: data/output/
           retention-days: 30
 
       - name: Notify pipeline execution
