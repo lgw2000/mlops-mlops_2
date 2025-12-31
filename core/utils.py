@@ -4,9 +4,11 @@ from datetime import datetime
 
 def save_to_local(base_dir: str, df: pd.DataFrame) -> tuple[bool, str]:
     try:
+        # 경로가 없으면 생성
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
-            print(f"디렉터리 생성 완료: {output_dir}")
+            # output_dir -> base_dir 로 변경
+            print(f"디렉터리 생성 완료: {base_dir}")
         
         timestamp = datetime.now().strftime("%Y%m%d"+"_"+"%H%M%S")
         filename = f"{timestamp}.csv"
@@ -20,4 +22,3 @@ def save_to_local(base_dir: str, df: pd.DataFrame) -> tuple[bool, str]:
     except Exception as e:
         print(f"로컬 저장 실패: {e}")
         return False, ""
-

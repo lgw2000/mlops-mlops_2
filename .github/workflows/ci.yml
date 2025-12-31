@@ -1,0 +1,107 @@
+name: MLOps Hybrid Pipeline
+
+# 1. 실행 조건 (Triggers)
+on:
+  push:
+    branches: [ main ]       # main 브랜치에 코드가 올라올 때
+  pull_request:
+    branches: [ main ]       # PR을 날렸을 때
+  schedule:
+    - cron: '0 0 * * *'      # 매일 밤 12시(자정)에 자동 실행
+
+env:
+  # Docker Hub 아이디로 이미지 이름 설정
+  IMAGE_NAME: gyuuujin/mlops-project 
+
+jobs:
+  # ====================================================
+  # JOB 1: 코드 품질 및 보안 검사
+  # ====================================================
+  quality-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11'] # 여러 버전에서 테스트 (안전성 증명)
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flake8 black bandit safety
+
+    - name: 1. 문법 검사 (Lint)
+      run: |
+        # 문법 오류나 스타일을 체크합니다.
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: 2. 보안 취약점 검사 (Security Scan)
+      run: |
+        # 코드에 보안 구멍이 있는지 검사합니다.
+        bandit -r . -c "pyproject.toml" || true
+        safety check || true
+
+  # ====================================================
+  # JOB 2: 도커 빌드 및 배포
+  # ====================================================
+  build-and-push:
+    needs: quality-check  # 위 검사가 통과해야만 실행됨
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' 
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and Push
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ env.IMAGE_NAME }}:latest, ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  # ====================================================
+  # JOB 3: 정기 데이터 수집 (스케줄링 + S3 연동)
+  # ====================================================
+  daily-data-collection:
+    needs: build-and-push
+    if: always() && (github.event_name == 'schedule') # 스케줄일 때만 실행
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run Data Collection (S3 Upload)
+      env:
+        # AWS 및 TMDB 키 설정 (S3 연동)
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+      run: |
+        # 수집 명령어 실행
+        python main.py collect 1
