@@ -1,5 +1,7 @@
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+
 
 class Preprocessor:
     def transform(self, local_raw_path: str) -> pd.DataFrame:

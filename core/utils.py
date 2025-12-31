@@ -1,6 +1,8 @@
 import os
-import pandas as pd
 from datetime import datetime
+
+import pandas as pd
+
 
 def save_to_local(base_dir: str, df: pd.DataFrame) -> tuple[bool, str]:
     try:

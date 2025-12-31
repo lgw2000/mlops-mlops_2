@@ -1,0 +1,220 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mlops
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlops-pipeline
+  namespace: mlops
+  labels:
+    app: mlops-pipeline
+    version: v1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: mlops-pipeline
+  template:
+    metadata:
+      labels:
+        app: mlops-pipeline
+        version: v1
+    spec:
+      containers:
+      - name: mlops-pipeline
+        image: ghcr.io/NullXeronier/mlops-mlops_2:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        env:
+        - name: TMDB_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mlops-secrets
+              key: tmdb-api-key
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: mlops-secrets
+              key: aws-access-key
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mlops-secrets
+              key: aws-secret-key
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: mlops-config
+              key: s3-bucket
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        volumeMounts:
+        - name: output-volume
+          mountPath: /app/data/output
+      volumes:
+      - name: output-volume
+        persistentVolumeClaim:
+          claimName: mlops-output-pvc
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - mlops-pipeline
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlops-pipeline-service
+  namespace: mlops
+  labels:
+    app: mlops-pipeline
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: mlops-pipeline
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlops-config
+  namespace: mlops
+data:
+  s3-bucket: "mlops-models"
+  log-level: "INFO"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlops-output-pvc
+  namespace: mlops
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mlops-pipeline-schedule
+  namespace: mlops
+spec:
+  schedule: "0 0 * * *"  # 매일 자정 실행
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: mlops-pipeline
+            image: ghcr.io/NullXeronier/mlops-mlops_2:latest
+            env:
+            - name: TMDB_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mlops-secrets
+                  key: tmdb-api-key
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: mlops-secrets
+                  key: aws-access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mlops-secrets
+                  key: aws-secret-key
+            - name: AWS_REGION
+              value: "us-east-1"
+            - name: S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: mlops-config
+                  key: s3-bucket
+          restartPolicy: OnFailure
+          serviceAccountName: mlops-service-account
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mlops-service-account
+  namespace: mlops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mlops-role
+  namespace: mlops
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/logs"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mlops-role-binding
+  namespace: mlops
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mlops-role
+subjects:
+- kind: ServiceAccount
+  name: mlops-service-account
+  namespace: mlops
