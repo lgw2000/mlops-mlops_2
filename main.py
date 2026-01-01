@@ -121,9 +121,9 @@ class Pipeline:
         wandb.finish()
 
 
-    def run_all(self):
+    def run_all(self, page_limit=20):
         """전체 파이프라인 시뮬레이션 (순차 실행)"""
-        self.collect()
+        self.collect(page_limit=page_limit)
         self.preprocess()
         self.train()
 

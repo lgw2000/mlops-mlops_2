@@ -6,7 +6,7 @@ import pandas as pd
 class Preprocessor:
     def transform(self, local_raw_path: str) -> pd.DataFrame:
         """Raw 데이터를 읽어 선형 회귀용 수치 데이터로 변환합니다."""
-        df = pd.read_csv(local_raw_path)
+        df = pd.read_csv(local_raw_path, engine='python', on_bad_lines='warn')
         
         # 1. 학습에 사용할 수치형 특성(Feature)과 타겟(Target) 선택
         # 특성: popularity(인기도), vote_count(투표수)

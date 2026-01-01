@@ -27,5 +27,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Run the application
-CMD ["python", "main.py"]
+# Run the application using the unified entrypoint
+ENTRYPOINT ["python", "entrypoint.py"]
